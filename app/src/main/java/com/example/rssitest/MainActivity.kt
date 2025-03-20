@@ -11,6 +11,7 @@ import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.ContextCompat
 
 class MainActivity : AppCompatActivity() {
     private lateinit var wifiManager: WifiManager
@@ -27,6 +28,8 @@ class MainActivity : AppCompatActivity() {
 
         wifiManager = applicationContext.getSystemService(Context.WIFI_SERVICE) as WifiManager
 
+
+
         if (!wifiManager.isWifiEnabled) {
             wifiManager.isWifiEnabled = true
         }
@@ -36,7 +39,7 @@ class MainActivity : AppCompatActivity() {
             override fun onReceive(context: Context?, intent: Intent?) {
                 Log.d("WiFiScan", "Received scan results broadcast")
                 val scanResults = wifiManager.scanResults
-                filterBySignalStrength(scanResults, -70) // -70dBm 이상의 신호만 필터링
+                filterBySignalStrength(scanResults, -1000) // -70dBm 이상의 신호만 필터링
             }
         }, IntentFilter(WifiManager.SCAN_RESULTS_AVAILABLE_ACTION))
 
