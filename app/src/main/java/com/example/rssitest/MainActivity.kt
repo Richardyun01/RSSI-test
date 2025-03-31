@@ -11,11 +11,18 @@ import android.util.Log
 import android.widget.ArrayAdapter
 import android.widget.ListView
 import androidx.appcompat.app.AppCompatActivity
+import java.util.Locale
+import kotlin.math.pow
 
 class MainActivity : AppCompatActivity() {
     private lateinit var wifiManager: WifiManager
     private lateinit var wifiListView: ListView
     private lateinit var wifiListAdapter: ArrayAdapter<String>
+
+    companion object {
+        private const val RSSI_AT_1M = -40         // 1미터 거리에서의 RSSI 값 (환경에 따라 조정)
+        private const val PATH_LOSS_EXPONENT = 3.0 // 실내 환경 감쇠 계수
+    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,22 +51,10 @@ class MainActivity : AppCompatActivity() {
         Log.d("WiFiScan", "Started Wi-Fi scan")
     }
 
-    /*
-    private fun updateWifiList(scanResults: List<ScanResult>, minRssi: Int) {
-        val filteredResults = scanResults.filter { it.level >= minRssi }
-        val wifiInfoList = if (filteredResults.isEmpty()) {
-            listOf("Wi-Fi 네트워크를 찾을 수 없습니다.")
-        } else {
-            filteredResults.map { "${it.SSID} - ${it.level}dBm" }
-        }
-
-        runOnUiThread {
-            wifiListAdapter.clear()
-            wifiListAdapter.addAll(wifiInfoList)
-            wifiListAdapter.notifyDataSetChanged()
-        }
+    // RSSI 값에 따라 거리를 계산하는 함수 (단위: 미터)
+    private fun calculateDistance(rssi: Int): Double {
+        return 10.0.pow((RSSI_AT_1M - rssi) / (10 * PATH_LOSS_EXPONENT))
     }
-    */
 
     private fun filterBySignalStrength(scanResults: List<ScanResult>, minRssi: Int) {
         Log.d("WiFiScan", "Scan result size: ${scanResults.size}") // 🔥 로그 추가
@@ -72,7 +67,12 @@ class MainActivity : AppCompatActivity() {
         val wifiInfoList = if (filteredResults.isEmpty()) {
             listOf("Wi-Fi 네트워크를 찾을 수 없습니다.")
         } else {
-            filteredResults.map { "${it.SSID} - ${it.level}dBm" }
+            filteredResults.map {
+                val distance = calculateDistance(it.level)
+                // 소수점 둘째 자리까지 포맷팅
+                val distanceFormatted = String.format(Locale.US, "%.2f", distance)
+                "${it.SSID} - ${it.level}dBm, 거리: ${distanceFormatted}m"
+            }
         }
 
         runOnUiThread {
